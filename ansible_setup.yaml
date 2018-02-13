@@ -1,0 +1,43 @@
+---
+- hosts: plusberry
+  tasks:
+  - name: install ansible and pip
+    become: yes
+    become_user: root
+    apt: name {{ item }} update_cache=yes cache_valid_time=3600 state=present
+    with_items:
+    - ansible
+    - python-pip
+
+  - name: config ansible
+    become: yes
+    become_user: root
+    template:
+      src: "client.ansible.cfg.j2"
+      dest: "/etc/ansible/ansible/cfg"
+      owner: root
+      group: root
+      mode: 0600
+  
+  - name: install git
+    apt: name=git update_cache=yes cache_valid_time=3600 state=present
+    
+  - name: download dynamic inventory scripts
+    git: repo=git@github.com:acaracappa/ansible-dynamic-inventory-mysql.git
+         dest=/root/ 
+         accept_hostkey=yes
+         force=yes
+         recursive=no
+         key_file=/Users/gibor/Projects/plusberry/pi_github_rsa
+  
+  - name: create inventory database tables
+    
+  - name: create modified mysql.ini
+
+  - name: install ara
+    become: yes
+    become_user: root
+    pip: name="ara"
+
+  - name: config ara
+

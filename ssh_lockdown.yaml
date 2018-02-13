@@ -1,0 +1,31 @@
+---
+- hosts: plusberry
+  gather_facts: true
+  vars:
+  tasks:
+    - name: Change SSH Port
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^Port'
+        line: 'Port 2275'
+      notify:
+        - restart_sshd
+        - restart_ssh'
+    - name: Disable password auth
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+  handlers:
+    - name: restart_sshd
+      service: 
+        name: sshd
+        state: restarted
+        enable: true
+      when: ansible_distribution == 'RedHat'
+    - name: ssh_restart
+      service: 
+        name: ssh 
+        state: restarted
+        enable: true
+      when: ansible_distribution == 'Debian'

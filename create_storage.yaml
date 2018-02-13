@@ -1,0 +1,34 @@
+---
+- hosts: plusberry
+  vars:
+    new_disk: '/dev/sda'
+    vg_name: 'vg_plusberry'
+    lv_name: 'lv_plusberry'
+    lv_size: '100%FREE' 
+    filesystem: 'ext4'
+    new_mntp: '/home/pi/ssd'
+  tasks:
+    - name: install lvm2
+      apt: name=lvm2 state=present
+      become: true
+      become_user: root
+ 
+    - name: creating new LVM volume group
+      lvg: vg={{ vg_name }} pvs={{ new_disk }} state=present
+      become: true
+      become_user: root
+
+    - name: creating new LVM logical volume
+      lvol: vg={{ vg_name }} lv={{ lv_name }} size={{ lv_size }}
+      become: true
+      become_user: root
+
+    - name: creating new filesystem on new LVM logical volume
+      filesystem: fstype={{ filesystem }} dev=/dev/{{ vg_name }}/{{ lv_name }}
+      become: true
+      become_user: root
+ 
+    - name: mounting new filesystem
+      mount: name={{ new_mntp }} src=/dev/{{ vg_name }}/{{ lv_name }} fstype={{ filesystem }} state=mounted
+      become: true
+      become_user: root

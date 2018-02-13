@@ -1,0 +1,10 @@
+---
+- hosts: raspberrypi
+  gather_facts: false
+  vars:
+    ssh_key: '/Users/gibor/Projects/plusberry/pi_plusberry_rsa.pub'
+  tasks:
+    - name: copy ssh key
+      authorized_key:
+        key: "{{ lookup('file', ssh_key) }}"
+        user: pi
