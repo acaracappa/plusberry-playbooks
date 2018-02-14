@@ -20,9 +20,13 @@
       mode: 0600
   
   - name: install git
+    become: yes
+    become_user:root
     apt: name=git update_cache=yes cache_valid_time=3600 state=present
     
   - name: download dynamic inventory scripts
+    become: yes
+    become: root
     git: repo=git@github.com:acaracappa/ansible-dynamic-inventory-mysql.git
          dest=/root/ 
          accept_hostkey=yes
@@ -30,10 +34,25 @@
          recursive=no
          key_file=/Users/gibor/Projects/plusberry/pi_github_rsa
   
-  - name: create inventory database tables
-    
-  - name: create modified mysql.ini
+  - name: create database
+    become: yes
+    become_user: root
+    mysql_db: name=inventory state=present collation=utf8_general_ci
+ 
+  - name: create db tables
+    become: yes
+    beceome_user: root
+    mysql_db: name=inventory tate=import target=/root/ansible-synamic-inventory-mysql/tables.sql
 
+  - name: create database user
+    become: yes 
+    become_user: root
+    mysql_db:
+
+  - name: rename modified mysql.ini and add credentials
+    become: yes
+    become_user: root
+    
   - name: install ara
     become: yes
     become_user: root
