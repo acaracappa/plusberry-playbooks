@@ -1,0 +1,10 @@
+---
+- hosts: plusberry
+
+
+- name: install ara
+    become: yes
+    become_user: root
+    pip: name="ara"
+
+  - name: config ara
