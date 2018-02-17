@@ -1,5 +1,7 @@
 ---
 - hosts: plusberry
+  vars:
+    ansible_db_pass: 'Open1234'
   tasks:
   - name: install ansible and pip
     become: yes
@@ -8,6 +10,7 @@
     with_items:
     - ansible
     - python-pip
+    - git
 
   - name: config ansible
     become: yes
@@ -19,11 +22,6 @@
       group: root
       mode: 0600
   
-  - name: install git
-    become: yes
-    become_user:root
-    apt: name=git update_cache=yes cache_valid_time=3600 state=present
-    
   - name: download dynamic inventory scripts
     become: yes
     become: root
@@ -41,22 +39,47 @@
  
   - name: create db tables
     become: yes
-    beceome_user: root
-    mysql_db: name=inventory tate=import target=/root/ansible-synamic-inventory-mysql/tables.sql
+    become_user: root
+    mysql_db: name=inventory tate=import target=/root/ansible-dynamic-inventory-mysql/tables.sql
 
   - name: create database user
     become: yes 
     become_user: root
-    mysql_db:
+    mysql_user: 
+      name: anaible 
+      password: "{{ ansible_db_pass  }}"
+      priv: '*.*:ALL' 
+      state: present
 
-  - name: rename modified mysql.ini and add credentials
+  - name: rename modified mysql.ini
     become: yes
     become_user: root
-    
-  - name: install ara
+    command: cp /root/ansible-dynamic-inventory-mysql/mysql.ini.dist /root/ansible-dynamic-inventory-mysql/mysql.ini
+  - name: set mysql.ini host
     become: yes
     become_user: root
-    pip: name="ara"
-
-  - name: config ara
-
+    lineinfile:
+      dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
+      regexp: "host = YOURHOST"
+      line: "host = localhost"
+  - name: set mysql.ini user
+    become: yes
+    become_user: root
+    lineinfile:
+      dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
+      regexp: "user = YOURUSER"
+      line: "user = ansible"
+  - name: set mysql.ini password
+    become: yes
+    become_user: root
+    lineinfile:
+      dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
+      regexp: "passwd = YOURPASSWORD"
+      line: "passwd = {{ ansible_db_pass }}"
+  - name: set mysql.ini datanasme name  
+    become: yes
+    become_user: root
+    lineinfile:
+      dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
+      regexp: "db = YOURDB"
+      line: "db = inventory"
