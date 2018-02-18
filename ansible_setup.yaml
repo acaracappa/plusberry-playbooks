@@ -3,34 +3,59 @@
   vars:
     ansible_db_pass: 'Open1234'
   tasks:
-  - name: install ansible and pip
+  - name: install ansible, pip and git
     become: yes
     become_user: root
-    apt: name {{ item }} update_cache=yes cache_valid_time=3600 state=present
-    with_items:
-    - ansible
-    - python-pip
-    - git
-
+    command: apt-get install ansible python-pip python3-pip git -y 
+ 
+  - name: ensure /etc/ansible/ exists
+    become: yes
+    become_user: root
+    file: 
+      path="/etc/ansible" 
+      state=directory
+  
   - name: config ansible
     become: yes
     become_user: root
     template:
       src: "client.ansible.cfg.j2"
-      dest: "/etc/ansible/ansible/cfg"
+      dest: "/etc/ansible/ansible.cfg"
       owner: root
       group: root
       mode: 0600
   
+  - name: create dir for inventory scripts
+    become: yes 
+    become_user: root
+    file:
+      path="/root/ansible-dynamic-inventory-mysql/"
+      state=directory
+      mode=0700
+ 
+  - name: move private key to server
+    become: yes
+    become_user: root
+    copy: src="/Users/gibor/Projects/plusberry/pi_github_rsa"
+      dest="/root/.ssh/id_rsa"
+      mode=0600
+  
+  - name: move pub key to server
+    become: yes
+    become_user: root
+    copy: src="/Users/gibor/Projects/plusberry/pi_github_rsa.pub"
+      dest="/root/.ssh/id_rsa.pub"
+      mode=0644
+ 
   - name: download dynamic inventory scripts
     become: yes
-    become: root
+    become_user: root
     git: repo=git@github.com:acaracappa/ansible-dynamic-inventory-mysql.git
-         dest=/root/ 
+         dest=/root/ansible-dynamic-inventory-mysql/ 
          accept_hostkey=yes
          force=yes
-         recursive=no
-         key_file=/Users/gibor/Projects/plusberry/pi_github_rsa
+         recursive=yes
+         key_file=/root/.ssh/id_rsa
   
   - name: create database
     become: yes
@@ -40,13 +65,13 @@
   - name: create db tables
     become: yes
     become_user: root
-    mysql_db: name=inventory tate=import target=/root/ansible-dynamic-inventory-mysql/tables.sql
+    mysql_db: name=inventory state=import target=/root/ansible-dynamic-inventory-mysql/tables.sql
 
   - name: create database user
     become: yes 
     become_user: root
     mysql_user: 
-      name: anaible 
+      name: ansible 
       password: "{{ ansible_db_pass  }}"
       priv: '*.*:ALL' 
       state: present
@@ -55,6 +80,7 @@
     become: yes
     become_user: root
     command: cp /root/ansible-dynamic-inventory-mysql/mysql.ini.dist /root/ansible-dynamic-inventory-mysql/mysql.ini
+  
   - name: set mysql.ini host
     become: yes
     become_user: root
@@ -62,6 +88,7 @@
       dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
       regexp: "host = YOURHOST"
       line: "host = localhost"
+  
   - name: set mysql.ini user
     become: yes
     become_user: root
@@ -69,6 +96,7 @@
       dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
       regexp: "user = YOURUSER"
       line: "user = ansible"
+  
   - name: set mysql.ini password
     become: yes
     become_user: root
@@ -76,6 +104,7 @@
       dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
       regexp: "passwd = YOURPASSWORD"
       line: "passwd = {{ ansible_db_pass }}"
+  
   - name: set mysql.ini datanasme name  
     become: yes
     become_user: root
@@ -83,3 +112,14 @@
       dest: /root/ansible-dynamic-inventory-mysql/mysql.ini
       regexp: "db = YOURDB"
       line: "db = inventory"
+  
+  - name: pip setuptools
+    become: yes
+    become_user: root
+    command: "pip3 install setuptools" 
+
+  - name: run setup.py 
+    become: yes
+    become_user: root
+    shell: "/usr/bin/python3.5 /root/ansible-dynamic-inventory-mysql/setup.py install"
+
