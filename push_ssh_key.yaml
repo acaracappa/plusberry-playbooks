@@ -1,10 +1,57 @@
 ---
-- hosts: raspberrypi
-  gather_facts: false
+- hosts: 192.168.1.67
+  gather_facts: true
   vars:
     ssh_key: '/Users/gibor/Projects/plusberry/pi_plusberry_rsa.pub'
+    hostname: 'plusberry'
   tasks:
     - name: copy ssh key
       authorized_key:
         key: "{{ lookup('file', ssh_key) }}"
         user: pi
+    
+    - name: set hostname in /etc/hostname
+      become: yes
+      hostname:
+        name: "{{ hostname }}" 
+
+    - name: set hostname in /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1'
+        line: '127.0.1.1 plusberry'
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - reload_hostname
+   
+    - name: test hostname
+      command: 'echo $hostname'
+    
+    
+    - name: Disable password auth
+      become: yes
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no' 
+
+    - name: Restart server
+      become: yes
+      shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded"
+      async: 1
+      poll: 0
+    
+  handlers:
+    - name: reload_hostname
+      command: 'sudo etc/init.d/hostname.sh'
+
+    - name: ssh_restart
+      become: yes
+      service:
+        name: ssh
+        state: restarted
+        enable: true
+
