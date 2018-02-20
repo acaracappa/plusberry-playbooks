@@ -4,10 +4,11 @@
   tasks: 
   - name: install diagnostic utilities
     become: yes
-    become_user: root
-    apt: name {{ item }} state=present
+    apt: name={{ item }} state=installed update_cache=true cache_valid_time=3600
     with_items:
+    - vim
     - htop
     - iftop
     - mytop
     - locate
+    - syslog-ng
