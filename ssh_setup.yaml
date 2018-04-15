@@ -2,7 +2,7 @@
 - hosts: 192.168.1.67
   gather_facts: true
   vars:
-    ssh_key: '/Users/gibor/Projects/plusberry/pi_plusberry_rsa.pub'
+    ssh_key: ''
     hostname: 'plusberry'
   tasks:
     - name: copy ssh key
