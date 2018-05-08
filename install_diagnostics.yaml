@@ -11,4 +11,5 @@
     - iftop
     - mytop
     - locate
+    - speedtest-cli
     - syslog-ng
