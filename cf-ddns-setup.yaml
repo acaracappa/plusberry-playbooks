@@ -1,0 +1,8 @@
+---
+- hosts: plusberry
+  gather_facts: no
+  tasks:
+  - name: ensure ddclient present
+    become: yes
+    apt: name=ddclient state=installed update_cache=true cache_valid_time=3600
+  
